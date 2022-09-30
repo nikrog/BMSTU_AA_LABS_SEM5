@@ -43,7 +43,7 @@ def test(len):
             stop = time.process_time()
 
             time_dam_lev_rec += stop - start
-        if i < N / 10:
+        if i < N / 100:
             start = time.process_time()
             damerau_lowenstein_dist_recursive_cache(s1, s2, False)
             stop = time.process_time()
@@ -53,7 +53,7 @@ def test(len):
     len_arr.append(len)
     y_time_lev_iter.append((time_lev_iter / N) * 1000000)
     y_time_dam_lev_iter.append((time_dam_lev_iter / N) * 1000000)
-    y_time_dam_lev_rec.append((time_dam_lev_rec / 10) * 1000000)
+    y_time_dam_lev_rec.append((time_dam_lev_rec / 100) * 1000000)
     y_time_dam_lev_rec_cach.append((time_dam_lev_rec_cach / (N/100)) * 1000000)
 
 
@@ -76,7 +76,7 @@ if __name__ == "__main__":
     for i in range(10):
        print_results(i)
 
-    fig = plt.figure(figsize = (10, 7))
+    fig = plt.figure(figsize=(10, 7))
     plot = fig.add_subplot()
     plot.plot(len_arr, y_time_lev_iter, label="Расст. Левенштейна(нерек)")
     plot.plot(len_arr, y_time_dam_lev_iter, label="Расст. Дамерау-Левенштейна(нерек)")
@@ -99,7 +99,7 @@ if __name__ == "__main__":
 
     fig1 = plt.figure(figsize=(10, 7))
     plot = fig1.add_subplot()
-    plot.plot(len_arr, y_time_lev_iter, label="Расст. Левенштейна(нерек)")
+    #plot.plot(len_arr, y_time_lev_iter, label="Расст. Левенштейна(нерек)")
     plot.plot(len_arr, y_time_dam_lev_iter, label="Расст. Дамерау-Левенштейна(нерек)")
     plot.plot(len_arr, y_time_dam_lev_rec, label="Расст. Дамерау-Левенштейна(рек)")
     plot.plot(len_arr, y_time_dam_lev_rec_cach, label="Расст. Дамерау-Левенштейна(рек, кеш)")
