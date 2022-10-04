@@ -1,0 +1,224 @@
+\chapter{Технологическая часть}
+
+В данном разделе будут представлены требования к программному обеспечению, средства реализации, листинги кода и тесты.
+
+\section{Требования к программному обеспечению}
+Вход: две строки (регистрозависимые);
+
+Выход: искомое расстояние, посчитанное с помощью реализованных алгоритмов: для расстояния Левенштейна - итерационный, а для расстояния Дамерау-Левенштейна - итерационный, рекурсивный (с кешированием и без кеширования).
+
+%\begin{enumerate}
+%	\item
+Если на вход программы подаются 2 пустые строки - это корректный ввод, программа должна завершаться без ошибок.
+	%\item
+В результате работы программа должна вывести число - расстояние Левенштейна или Дамерау-Левенштейна в зависимости от алгоритма, матрицу при необходимости.
+%\end{enumerate}
+
+
+\section{Выбор средств реализации}
+
+В качестве языка программирования для реализации данной лабораторной работы был выбран язык программирования Python  \cite{PythonBook}. Данный язык ускоряет процесс разработки и удобен в использовании.
+
+Процессорное время реализованных алгоритмов было замерено с помощью функции process\_time() из библиотеки time \cite{process_time_text}.
+
+В качестве среды разработки был выбран PyCharm Professional \cite{pycharm}. Данная среда разработки является кросс-платформенной, предоставляет функциональный отладчик, средства для рефакторинга кода и возможность быстрой установки необходимых библиотек при необходимости.
+
+\section{Реализация алгоритмов}
+
+В листингах \ref{leven_iter} - \ref{dlev_rec_cash} представлены реализации алгоритмов поиска расстояний Левенштейна и Дамерау-Левенштейна.
+
+\begin{lstlisting}[caption=Функция итеративного алгоритма поиска расстояния Левенштейна с заполнением матрицы расстояний, 
+    label={leven_iter}]
+	def lowenstein_dist_non_recursive(s1, s2, flag=False):
+        # len of string + 1 empty symbol
+        n = len(s1) + 1
+        m = len(s2) + 1
+
+        matrix = [[0 for i in range(m)] for j in range(n)]
+
+        # trivial cases
+        for j in range(1, m):
+            matrix[0][j] = j  # INSERT
+        for i in range(1, n):
+            matrix[i][0] = i  # DELETE
+
+        # filling the rest part of the matrix
+        for i in range(1, n):
+            for j in range(1, m):
+                insert = matrix[i][j - 1] + 1
+                delete = matrix[i - 1][j] + 1
+                tmp = 1  # REPLACE
+                if s1[i - 1] == s2[j - 1]:
+                    tmp = 0  # MATCH
+                replace = matrix[i - 1][j - 1] + tmp
+                matrix[i][j] = min(insert, delete, replace)
+
+        if flag:
+            print('Matrix:')
+            for row in matrix:
+                print(row)
+
+        return matrix[n - 1][m - 1]  # Result
+\end{lstlisting}
+
+
+\begin{lstlisting}[caption=Функция итеративного алгоритма поиска расстояния Дамерау-Левенштейна с заполнением матрицы расстояний,
+    label={dleven_iter}]
+def damerau_lowenstein_dist_non_recursive(s1, s2, flag=False):
+    # len of string + 1 empty symbol
+    n = len(s1) + 1
+    m = len(s2) + 1
+
+    matrix = [[0 for i in range(m)] for j in range(n)]
+
+    # trivial cases
+    for j in range(1, m):
+        matrix[0][j] = j  # INSERT
+    for i in range(1, n):
+        matrix[i][0] = i  # DELETE
+
+    # filling the rest part of the matrix
+    for i in range(1, n):
+        for j in range(1, m):
+            insert = matrix[i][j - 1] + 1
+            delete = matrix[i - 1][j] + 1
+            tmp = 1  # REPLACE
+            if s1[i - 1] == s2[j - 1]:
+                tmp = 0  # MATCH
+            replace = matrix[i - 1][j - 1] + tmp
+            matrix[i][j] = min(insert, delete, replace)
+            # i -> i-1, i-1 -> i-2 because string don't have zero symbol in begin
+            if i > 1 and j > 1 and s1[i - 1] == s2[j - 2] and s1[i - 2] == s2[j - 1]:
+                exchange = matrix[i - 2][j - 2] + 1  # EXCHANGE
+                matrix[i][j] = min(matrix[i][j], exchange)
+
+    if flag:
+        print('Matrix:')
+        for row in matrix:
+            print(row)
+
+    return matrix[n - 1][m - 1]  # Result
+\end{lstlisting}
+
+\begin{lstlisting}[caption=Функция рекурсивного алгоритма поиска расстояния Дамерау-Левенштейна без кеширования,
+	label={dleven_rec}]
+def damerau_lowenstein_dist_recursive(s1, s2):
+    # trivial cases (exit)
+    if not s1:
+        return len(s2)
+    elif not s2:
+        return len(s1)
+
+    insert = damerau_lowenstein_dist_recursive(s1, s2[:-1]) + 1
+    delete = damerau_lowenstein_dist_recursive(s1[:-1], s2) + 1
+    replace = damerau_lowenstein_dist_recursive(s1[:-1], s2[:-1]) + int(s1[-1] != s2[-1])
+
+    if len(s1) > 1 and len(s2) > 1 and s1[-1] == s2[-2] and s1[-2] == s2[-1]:
+        exchange = damerau_lowenstein_dist_recursive(s1[:-2], s2[:-2]) + 1
+        return min(insert, delete, replace, exchange)
+    else:
+        return min(insert, delete, replace)
+
+\end{lstlisting}
+
+\begin{lstlisting}[caption=Функция рекурсивного алгоритма поиска расстояния Дамерау-Левенштейна с кешированием,
+	label={dlev_rec_cash}]
+INF = -1
+
+def damerau_lowenstein_dist_recursive_cache_helper(s1, s2, matrix):
+    # len of string
+    len1 = len(s1)
+    len2 = len(s2)
+
+    # trivial cases
+    if not len1:
+        matrix[len1][len2] = len2
+    elif not len2:
+        matrix[len1][len2] = len1
+    else:
+        # insert
+        if matrix[len1][len2 - 1] == INF:
+            damerau_lowenstein_dist_recursive_cache_helper(s1, s2[:-1], matrix)
+        # delete
+        if matrix[len1 - 1][len2] == INF:
+            damerau_lowenstein_dist_recursive_cache_helper(s1[:-1], s2, matrix)
+        # replace
+        if matrix[len1 - 1][len2 - 1] == INF:
+            damerau_lowenstein_dist_recursive_cache_helper(s1[:-1], s2[:-1], matrix)
+        # exchange
+        #if matrix[len1 - 2][len2 - 2] == INF:
+            #damerau_lowenstein_dist_recursive_cache_helper(s1[:-2], s2[:-2], matrix)
+
+        matrix[len1][len2] = min(matrix[len1][len2 - 1] + 1,
+                                 matrix[len1 - 1][len2] + 1,
+                                 matrix[len1 - 1][len2 - 1] + int(s1[-1] != s2[-1]))
+
+        if len1 > 1 and len2 > 1 and s1[-1] == s2[-2] and s1[-2] == s2[-1]:
+            matrix[len1][len2] = min(matrix[len1][len2],
+                                     matrix[len1 - 2][len2 - 2] + 1)
+
+        return
+        
+def damerau_lowenstein_dist_recursive_cache(s1, s2, flag=False):
+    # len of string + 1 empty symbol
+    n = len(s1) + 1
+    m = len(s2) + 1
+    matrix = [[-1 for i in range(m)] for j in range(n)]
+    damerau_lowenstein_dist_recursive_cache_helper(s1, s2, matrix)
+
+    if flag:
+        print('Matrix:')
+        for row in matrix:
+            print(row)
+
+    return matrix[n - 1][m - 1]
+\end{lstlisting}
+
+\section{Тестирование}
+
+В таблице \ref{test} приведены функциональные тесты для алгоритмов вычисления расстояний Левенштейна и Дамерау — Левенштейна. В таблице приняты следующие обозначения: Расст. Л - результат алгоритма поиска расстояния Левенштейна, Расст. Д-Л - результат алгоритма поиска рассотяния Дамерау-Левенштейна). Все тесты были пройдены успешно.
+
+\begin{table}[h]
+	\begin{center}
+		\caption{\label{test} Тесты}
+		\begin{tabular}{|c|c|c|c|c|}
+			\hline
+			& & & \multicolumn{2}{c|}{\bfseries Ожидаемый результат}    \\ \cline{3-4}\hline
+			№ & Строка 1& Строка 2 & Расст. Л & Расст. Д-Л \\ [0.5ex] 
+			\hline
+			1 & "пустая строка" & "пустая строка" & 0 & 0\\
+			\hline
+			2 & "пустая строка" & abc & 3 & 3\\
+			\hline
+			3 & abc & "пустая строка" & 3 & 3\\
+			\hline
+			4 & art & art & 0 & 0\\
+			\hline
+			5 & af & a & 1 & 1\\
+			\hline
+			6 & f & af & 1 & 1\\
+			\hline
+			7 & гора & горы & 1 & 1\\
+			\hline
+			8 & 12345 & 12435 & 2 & 1\\
+			\hline
+			9 & солнце & солнцестояние & 7 & 7\\
+			\hline
+			10 & солнцестояние & солнце & 7 & 7\\
+			\hline
+			11 & кот & скат & 2 & 2\\
+			\hline
+			12 & нитситту & институт & 4 & 2\\
+			\hline
+			13 & клсас & класс & 2 & 1\\
+			\hline
+			14 & аргон & арнон & 1 & 1\\
+			\hline
+		\end{tabular}
+	\end{center}
+\end{table}
+
+\section*{Вывод}
+
+В данном разделе были представлены требования к программному обеспечению и средства реализации, реализованы и протестированы алгоритмы поиска расстояний: Левенштейна - итерационный, Дамерау-Левенштейна - итерационный, рекурсивный (с кешированием и без)
+

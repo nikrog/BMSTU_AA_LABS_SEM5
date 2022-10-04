@@ -15,7 +15,7 @@ def lowenstein_dist_non_recursive(s1, s2, flag=False):
 
     matrix = [[0 for i in range(m)] for j in range(n)]
 
-    # filling matrix with trivial rules
+    # trivial cases
     for j in range(1, m):
         matrix[0][j] = j  # INSERT
     for i in range(1, n):
@@ -48,7 +48,7 @@ def damerau_lowenstein_dist_non_recursive(s1, s2, flag=False):
 
     matrix = [[0 for i in range(m)] for j in range(n)]
 
-    # filling matrix with trivial rules
+    # trivial cases
     for j in range(1, m):
         matrix[0][j] = j  # INSERT
     for i in range(1, n):
@@ -97,7 +97,7 @@ def damerau_lowenstein_dist_recursive(s1, s2):
 
 # вспомогательная функция
 def damerau_lowenstein_dist_recursive_cache_helper(s1, s2, matrix):
-    # len of string + 1 empty symbol
+    # len of string
     len1 = len(s1)
     len2 = len(s2)
 
@@ -144,11 +144,6 @@ def damerau_lowenstein_dist_recursive_cache(s1, s2, flag=False):
             print(row)
 
     return matrix[n - 1][m - 1]
-
-
-def random_string(lenght):
-    letters = string.ascii_lowercase
-    return ''.join(random.choice(letters) for i in range(lenght))
 
 
 def ask_user():
