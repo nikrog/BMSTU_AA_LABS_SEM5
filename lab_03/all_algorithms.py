@@ -19,11 +19,31 @@ def gnome_sort(arr):
     return arr
 
 
+# Гномья сортировка с оптимизацией
+# запоминние позиции, с которой начались обмены,
+# то затем можно сразу же перепрыгнуть в эту позицию,
+# когда обмены завершены.
+def gnome_sort_optimized(arr):
+    i = 1
+    j = 2
+    n = len(arr)
+    while i < n:
+        if arr[i - 1] > arr[i]:
+            arr[i - 1], arr[i] = arr[i], arr[i - 1]
+            i -= 1
+            if i == 0:
+                i = j
+                j += 1
+        else:
+            i = j
+            j += 1
+    return arr
+
 # Подсчет количества цифр в числе
 def count_digits(num):
     c = 0
     while abs(num) > 0:
-        num //= 10
+        num /= 10
         c += 1
     return c
 
@@ -39,16 +59,9 @@ def num_digits(arr):
 
 
 # Поразрядная сортировка (по младшим разрядам - LSD)
-# Сравнение производится поразрядно: сначала сравниваются значения одного крайнего разряда,
-# и элементы группируются по результатам этого сравнения, затем сравниваются значения следующего разряда, соседнего,
-# и элементы либо упорядочиваются по результатам сравнения значений этого разряда внутри образованных
-# на предыдущем проходе групп, либо переупорядочиваются в целом, но сохраняя относительный порядок,
-# достигнутый при предыдущей сортировке.
-# Затем аналогично делается для следующего разряда, и так до конца.
 def radix_sort(arr):
     m_dig = num_digits(arr)
     for d in range(0, m_dig):
-        # 10, т.к существует всего 10 возможных цифр [0-9]
         tmp = [[] for i in range(10)]
         for i in range(len(arr)):
             num = (arr[i] // (10 ** d)) % 10
@@ -78,15 +91,18 @@ def selection_sort(arr):
     return arr
 
 
-if __name__ == '__main__':
-    while True:
-        n_a = int(input("Введите количество элементов в массиве: "))
-        print(f"Введите {n_a} элементов массива: ")
-        a = list(map(int, input().split(maxsplit=n_a)))
-        print("Исходный массив: ", a)
-        print("Гномья сортировка: ", gnome_sort(a))
-        print("Сортировка выбором: ", selection_sort(a))
-        print("Поразрядная сортировка: ", radix_sort(a))
-        cmd = str(input("Продожить - <ENTER>, выйти - q >> "))
-        if cmd == 'q':
-            exit()
+def selection_sort2(arr):
+    i = 1
+    i_max = 0
+    n = len(arr)
+    while i < n:
+        if arr[i] > arr[i_max]:
+            i_max = i
+        if i == n - 1:
+            if arr[i_max] > arr[n - 1]:
+                arr[n - 1], arr[i_max] = arr[i_max], arr[n - 1]
+            n -= 1
+            i = 0
+            i_max = 0
+        i += 1
+    return arr
