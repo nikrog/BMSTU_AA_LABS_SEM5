@@ -1,0 +1,157 @@
+\chapter{Технологическая часть}
+
+В данном разделе будут представлены требования к программному обеспечению, средства реализации, листинги кода и тесты.
+
+\section{Требования к программному обеспечению}
+Вход: массив целых чисел, количество чисел в массиве;
+
+Выход: тот же массив, но уже отсортированный.
+
+Результат сортировки массива должен быть выведен для каждого из реализованных алгоритмов сортировки (гномья сортировка, поразрядная сортировка, сортировка выбором).
+
+\section{Выбор средств реализации}
+
+В качестве языка программирования для реализации данной лабораторной работы был выбран язык программирования Python  \cite{PythonBook}. Данный язык ускоряет процесс разработки и удобен в использовании.
+
+Процессорное время реализованных алгоритмов было замерено с помощью функции process\_time() из библиотеки time \cite{process_time_text}.
+
+В качестве среды разработки был выбран PyCharm Professional \cite{pycharm}. Данная среда разработки является кросс-платформенной, предоставляет функциональный отладчик, средства для рефакторинга кода и возможность быстрой установки необходимых библиотек при необходимости.
+
+\section{Реализация алгоритмов}
+
+В листингах \ref{gnome_sort} - \ref{selection_sort} представлены реализации различных алгоритмов сортировки: гномьей сортировки, поразрядной сортировки, сортировки выбором.
+
+\begin{lstlisting}[caption=Функция алгоритма гномьей сортировки, 
+    label={gnome_sort}]
+def gnome_sort(arr):
+    i = 1
+    n = len(arr)
+    while i < n:
+        if arr[i - 1] > arr[i]:
+            arr[i - 1], arr[i] = arr[i], arr[i - 1]
+            if i > 1:
+                i -= 1
+        else:
+            i += 1
+    return arr
+\end{lstlisting}
+
+
+\begin{lstlisting}[caption=Функция алгоритма поразрядной сортировки (классическая реализация для сортировки целых неотрицательных чисел),
+    label={radix_sort}]
+# counting quantity of digits in number
+def count_digits(num):
+    c = 0
+    while num > 0:
+        num /= 10
+        c += 1
+    return c
+
+
+# counting quantity of digits in maximum number in array
+def num_digits(arr):
+    max_num = arr[0]
+    n = len(arr)
+    for i in range(n):
+        if max_num < arr[i]:
+            max_num = arr[i]
+    return count_digits(max_num)
+
+
+# main function
+def radix_sort(arr):
+    m_dig = num_digits(arr)
+    for d in range(0, m_dig):
+        # 10, because of 10 possible digits (0 - 9)
+        tmp = [[] for i in range(10)]
+        for i in range(len(arr)):
+            num = (arr[i] // (10 ** d)) % 10
+            tmp[num].append(arr[i])
+        arr = reduce(lambda x, y: x + y, tmp)
+    return arr
+
+\end{lstlisting}
+
+\begin{lstlisting}[caption=Функция алгоритма поразрядной сортировки (модифицированная реализация для сортировки целых чисел),
+	label={radix_sort2}]
+# counting quantity of digits in number
+def count_digits(num):
+    c = 0
+    num = abs(num)
+    while num > 0:
+        num //= 10
+        c += 1
+    return c
+
+
+# counting quantity of digits in maximum number in array
+def num_digits(arr):
+    max_num = abs(arr[0])
+    n = len(arr)
+    for i in range(n):
+        if max_num < abs(arr[i]):
+            max_num = abs(arr[i])
+    return count_digits(max_num)
+
+
+# main function
+def radix_sort(arr):
+    m_dig = num_digits(arr)
+    for d in range(0, m_dig):
+        # 10, because of 10 possible digits (0...9),
+        # but for negative numbers add digits (-9...-1)
+        tmp = [[] for i in range(19)]
+        for i in range(len(arr)):
+            if arr[i] < 0:
+                num = -((abs(arr[i]) // (10 ** d)) % 10)
+            else:
+                num = (arr[i] // (10 ** d)) % 10
+            tmp[9 + num].append(arr[i])
+        arr = reduce(lambda x, y: x + y, tmp)
+    return arr
+\end{lstlisting}
+
+\begin{lstlisting}[caption=Функция алгоритма сортировки выбором,
+	label={selection_sort}]
+def selection_sort(arr):
+    n = len(arr)
+    for i in range(n - 1, 0, -1):
+        i_max = i
+        for j in range(i - 1, -1, -1):
+            if arr[j] > arr[i_max]:
+                i_max = j
+        if i_max != i:
+            arr[i], arr[i_max] = arr[i_max], arr[i]
+    return arr
+\end{lstlisting}
+
+\section{Тестирование}
+
+В таблице \ref{test} приведены функциональные тесты для алгоритмов сортировки (гномья сортировка, поразрядная сортировка, сортировка выбором). Все тесты были пройдены успешно.
+
+\begin{table}[h]
+	\begin{center}
+		\caption{\label{test} Тесты}
+\begin{tabular}{| c | l | l | }
+	\hline
+	№ & Исходный массив & Ожидаемый результат \\ \hline
+	1 & 0 & 0 \\
+	\hline
+	2 & 5, 5, 5, 5 & 5, 5, 5, 5 \\
+	\hline
+	3 & 1, 45, 78, 109, 764 & 1, 45, 78, 109, 764 \\
+	\hline
+	4 & 78, 44, 32, 1 & 1, 32, 44, 78 \\
+	\hline
+	5 & -90, -356, -4, -1058 & -1058, -356, -90, -4\\
+	\hline
+	6 & 234, 7, -11, 68, -3, 1005 & -11, -3, 7, 68, 234, 1005\\
+	\hline
+\end{tabular}
+	\end{center}
+\end{table}
+
+\section*{Вывод}
+
+В данном разделе были представлены требования к программному обеспечению и средства реализации, реализованы и протестированы алгоритмы сортиовки: гномья сортировка, поразрядная сортировка, сортировка выбором.
+

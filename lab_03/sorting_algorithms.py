@@ -9,20 +9,24 @@ from functools import reduce
 def gnome_sort(arr):
     i = 1
     n = len(arr)
+    #c = 0
     while i < n:
+        #c += 1
         if arr[i - 1] > arr[i]:
             arr[i - 1], arr[i] = arr[i], arr[i - 1]
             if i > 1:
                 i -= 1
         else:
             i += 1
+    #print(c)
     return arr
 
 
 # Подсчет количества цифр в числе
 def count_digits(num):
     c = 0
-    while abs(num) > 0:
+    num = abs(num)
+    while num > 0:
         num //= 10
         c += 1
     return c
@@ -30,11 +34,11 @@ def count_digits(num):
 
 # Считаем количество цифр в максимальном числе из массива
 def num_digits(arr):
-    max_num = arr[0]
+    max_num = abs(arr[0])
     n = len(arr)
     for i in range(n):
-        if max_num < arr[i]:
-            max_num = arr[i]
+        if max_num < abs(arr[i]):
+            max_num = abs(arr[i])
     return count_digits(max_num)
 
 
@@ -47,12 +51,17 @@ def num_digits(arr):
 # Затем аналогично делается для следующего разряда, и так до конца.
 def radix_sort(arr):
     m_dig = num_digits(arr)
+    #print(m_dig)
     for d in range(0, m_dig):
-        # 10, т.к существует всего 10 возможных цифр [0-9]
-        tmp = [[] for i in range(10)]
+        # 19, т.к существует всего 10 возможных цифр [0...9],
+        # для отрицательных чисел введем дополнительные цифры [-9...-1]
+        tmp = [[] for i in range(19)]
         for i in range(len(arr)):
-            num = (arr[i] // (10 ** d)) % 10
-            tmp[num].append(arr[i])
+            if arr[i] < 0:
+                num = -((abs(arr[i]) // (10 ** d)) % 10)
+            else:
+                num = (arr[i] // (10 ** d)) % 10
+            tmp[9 + num].append(arr[i])
         arr = reduce(lambda x, y: x + y, tmp)
         #print(arr, tmp)
     return arr
@@ -84,9 +93,12 @@ if __name__ == '__main__':
         print(f"Введите {n_a} элементов массива: ")
         a = list(map(int, input().split(maxsplit=n_a)))
         print("Исходный массив: ", a)
-        print("Гномья сортировка: ", gnome_sort(a))
-        print("Сортировка выбором: ", selection_sort(a))
-        print("Поразрядная сортировка: ", radix_sort(a))
+        a_copy = a
+        print("Гномья сортировка: ", gnome_sort(a_copy))
+        a_copy = a
+        print("Сортировка выбором: ", selection_sort(a_copy))
+        a_copy = a
+        print("Поразрядная сортировка: ", radix_sort(a_copy))
         cmd = str(input("Продожить - <ENTER>, выйти - q >> "))
         if cmd == 'q':
             exit()

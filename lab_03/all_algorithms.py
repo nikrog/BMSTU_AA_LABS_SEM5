@@ -39,10 +39,11 @@ def gnome_sort_optimized(arr):
             j += 1
     return arr
 
+
 # Подсчет количества цифр в числе
 def count_digits(num):
     c = 0
-    while abs(num) > 0:
+    while num > 0:
         num /= 10
         c += 1
     return c
@@ -62,6 +63,7 @@ def num_digits(arr):
 def radix_sort(arr):
     m_dig = num_digits(arr)
     for d in range(0, m_dig):
+        # 10, т.к существует всего 10 возможных цифр [0-9]
         tmp = [[] for i in range(10)]
         for i in range(len(arr)):
             num = (arr[i] // (10 ** d)) % 10
