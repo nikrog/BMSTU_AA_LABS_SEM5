@@ -1,0 +1,194 @@
+\chapter{Технологическая часть}
+
+В данном разделе будут представлены требования к программному обеспечению, средства реализации, листинги кода и тесты.
+
+\section{Требования к программному обеспечению}
+Пользователю предоставляется графический интерфейс для ввода данных.
+
+Вход: длина отрезка (целое число), режим построения отрезка (с распараллеливанием или без него), количество потоков (в случае выбора режима построения отрезка с распараллеливанием), действие (построение спектра отрезков, очистка экрана, замер процессорного времени работы реализаций алгоритмов построения спектра отрезков);
+
+Выход: спектр отрезков на эране/результаты замеров процессорного времени в консоли.
+
+\section{Выбор средств реализации}
+
+В качестве языка программирования для реализации данной лабораторной работы был выбран язык программирования С++ \cite{cpp}. Данный язык программирования позволяет замерить время выполнения работы реализации алгоритма, а также организовать многопоточность для параллельных вычислений.
+
+Время выполнения реализаций алгоритма построения спектра отрезков было замерено с помощью функции \textit{std::chrono::system\_clock::now(...)} из библиотеки $chrono$ \cite{chrono}.
+
+В качестве среды разработки был выбран QtCreator \cite{qt}. 
+
+Графики были построены с использованием языка программирования Python \cite{PythonBook}.
+
+\section{Реализация алгоритмов}
+
+В листинге \ref{bres_alg} представлена реализация алгоритма Брезенехема для построения отрезка, а в листингах \ref{no_par}, \ref{par} --- реализация алгоритмов построения спектра отрезков по Брезенехему с многопоточностью и без нее соответственно.
+
+\begin{lstlisting}[caption=Функция алгоритма Брезенехема для построения отрезка, 
+    label={bres_alg}]
+void bresenham_float(const request_t &r, const point_t &p1, const point_t &p2)
+{
+    int dx = abs(p2.x - p1.x);
+    int dy = abs(p2.y - p1.y);
+
+    int sx = sign(p2.x - p1.x);
+    int sy = sign(p2.y - p1.y);
+
+    int change_fl = 0;
+
+    if (dy > dx)
+    {
+        swap(dx, dy);
+        change_fl = 1;
+    }
+
+    double m = (double)dy / (double)dx;
+    double e = m - 0.5;
+
+    int x = p1.x;
+    int y = p1.y;
+
+    std::mutex mut;
+
+    for (int i = 0; i < dx; i++)
+    {
+        if (r.is_draw)
+        {
+            mut.lock();
+            draw_pixel(r, x, y);
+            mut.unlock();
+        }
+        if (e >= 0)
+        {
+            if (change_fl == 0)
+            {
+                y += sy;
+            }
+            else
+            {
+                x += sx;
+            }
+
+            e -= 1;
+        }
+        if (change_fl == 0)
+        {
+             x += sx;
+        }
+        else
+        {
+            y += sy;
+        }
+
+        e += m;
+    }
+}
+\end{lstlisting}
+
+
+\begin{lstlisting}[caption=Функция алгоритма построения спектра отрезков по Брезенехему (без многопоточности),
+    label={no_par}]
+void calculate_spek_no_parallel(const request_t &r, const spektr_t &params)
+{
+    int spektr = 360;
+
+    point_t p1, p2;
+    p1.x = WSIZE_X / 2;
+    p1.y = WSIZE_Y / 2;
+
+    for (int i = 0; i < spektr; i += 1)
+    {
+        p2.x = cos(i * PI / 180) * params.d + WSIZE_X / 2;
+        p2.y = sin(i * PI / 180) * params.d + WSIZE_Y / 2;
+
+        // rounding for Bresenham float algorithm
+        p1.x = round(p1.x);
+        p1.y = round(p1.y);
+        p2.x = round(p2.x);
+        p2.y = round(p2.y);
+
+
+        calculate_line(r, p1, p2);
+    }
+}
+\end{lstlisting}
+
+\begin{lstlisting}[caption=Функция алгоритма построения спектра отрезков по Брезенехему (с многопоточностью),
+	label={par}]
+void calculate_part_spek(const request_t &r, const spektr_t &params, int t_ind)
+{
+    int spektr = 360;
+    int sector_in_t = spektr / params.t_count;
+    int part_ind = t_ind * sector_in_t;
+
+    if (t_ind + 1 == params.t_count)
+    {
+        sector_in_t += (spektr - sector_in_t * params.t_count);
+    }
+
+    point_t p1, p2;
+    p1.x = WSIZE_X / 2;
+    p1.y = WSIZE_Y / 2;
+
+    for (int i = part_ind; i < part_ind + sector_in_t; i += 1)
+    {
+
+        p2.x = cos(i * PI / 180) * params.d + WSIZE_X / 2;
+        p2.y = sin(i * PI / 180) * params.d + WSIZE_Y / 2;
+
+        // rounding for Bresenham float algorithm
+        p1.x = round(p1.x);
+        p1.y = round(p1.y);
+        p2.x = round(p2.x);
+        p2.y = round(p2.y);
+
+        calculate_line(r, pt1, pt2);
+    }
+}
+
+
+void calculate_spek_parallel(const request_t &r, const spektr_t &params)
+{
+    std::vector<std::thread> thrs(params.t_count);
+
+    for (int i = 0; i < params.t_count; i++)
+    {
+        thrs[i] = std::thread(calculate_part_spek, r, params, i);
+    }
+
+    for (int i = 0; i < params.t_count; i++)
+    {
+        thrs[i].join();
+    }
+}
+\end{lstlisting}
+
+\section{Тестирование}
+
+В таблице \ref{test} приведены функциональные тесты для алгоритмов построения спектра отрезков. Все тесты были пройдены успешно.
+
+
+\begin{table}[h]
+	\begin{center}
+		\caption{\label{test} Тесты}
+		\begin{tabular}{|c|c|c|c|}
+			\hline
+			№ & Длина отрезка & Кол-во потоков & Ожидаемый результат \\
+			\hline
+            1 & 0 & 0 & Сообщение об ошибке \\
+            \hline
+            2 & 50 & -1 & Сообщение об ошибке \\
+            \hline
+            3 & -100 & 2 & Сообщение об ошибке \\
+            \hline
+            4 & 200 & 1 &  Спектр с отрезками длины 200 \\
+			\hline
+			5 & 300 & 8 & Спектр с отрезками длины 300 \\
+			\hline
+		\end{tabular}
+	\end{center}
+\end{table}
+
+\section*{Вывод}
+
+В данном разделе были представлены требования к программному обеспечению и средства реализации, реализованы и протестированы алгоритмы построения спектра отрезков по Брезенхему с распараллеливанием и без него.
+
