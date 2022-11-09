@@ -3,11 +3,11 @@
 В данном разделе будут представлены требования к программному обеспечению, средства реализации, листинги кода и тесты.
 
 \section{Требования к программному обеспечению}
-Вход: две матрицы A и B, количество строк и стобцов в данных матрицах, причем количество столбцов в матрице A должно быть равно количеству строк в матрице B.;
+Вход: две матрицы A и B, количество строк и стобцов в данных матрицах, причем количество столбцов в матрице A должно быть равно количеству строк в матрице B.
 
 Выход: матрица C --- результат умножения матриц A и B.
 
-Результат умножения введенных пользователем матриц должен быть выведен для каждого из реализованных алгоритмов умножения матриц (стандартный, Винограда, оптимизированный Винограда).
+Результат умножения введенных пользователем матриц должен быть выведен для каждого из реализованных алгоритмов умножения матриц: стандартного, Винограда, оптимизированного Винограда.
 
 \section{Выбор средств реализации}
 
@@ -21,6 +21,7 @@
 
 В листингах \ref{stand_mult} -- \ref{vinograd_opt_mult} представлены реализации различных алгоритмов умножения матриц: стандартного, Винограда, оптимизированного Винограда.
 
+\captionsetup{singlelinecheck = false, justification=raggedright}
 \begin{lstlisting}[caption=Реализация стандартного алгоритма умножения матриц, 
     label={stand_mult}]
 def standart_mult_matr(matr1, matr2):
@@ -42,7 +43,7 @@ def standart_mult_matr(matr1, matr2):
     return res
 \end{lstlisting}
 
-
+\captionsetup{singlelinecheck = false, justification=raggedright}
 \begin{lstlisting}[caption=Реализация алгоритма Винограда умножения матриц,
     label={vinograd_mult}]
 def vinograd_mult_matr(matr1, matr2):
@@ -83,6 +84,7 @@ def vinograd_mult_matr(matr1, matr2):
     return res
 \end{lstlisting}
 
+\captionsetup{singlelinecheck = false, justification=raggedright}
 \begin{lstlisting}[caption=Реализация оптимизированного алгоритма Винограда умножения матриц,
 	label={vinograd_opt_mult}]
 def vinograd_optimized_mult_matrix(matr1, matr2):
@@ -122,6 +124,7 @@ def vinograd_optimized_mult_matrix(matr1, matr2):
     return res
 
 \end{lstlisting}
+\captionsetup{singlelinecheck = false, justification=centering}
 
 \section{Тестирование}
 

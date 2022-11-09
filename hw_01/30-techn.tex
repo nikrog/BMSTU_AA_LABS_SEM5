@@ -6,6 +6,7 @@
 \section{Исходный код программы}
 В листинге \ref{dleven_iter} представлена реализация поиска расстояния Дамерау-Левенштейна с заполнением матрицы расстояний.
 
+\captionsetup{singlelinecheck = false, justification=raggedright}
 \begin{lstlisting}[caption=Реализация итеративного алгоритма поиска расстояния Дамерау-Левенштейна с заполнением матрицы расстояний,
     label={dleven_iter}]
 def damerau_lowenstein_dist_non_recursive(s1, s2, flag=False):
@@ -33,6 +34,7 @@ def damerau_lowenstein_dist_non_recursive(s1, s2, flag=False):
 
     return matrix[n - 1][m - 1]
 \end{lstlisting}
+\captionsetup{singlelinecheck = false, justification=centering}
 
 \section{Графовые модели алгоритма}
 На рисунке \ref{img:GU} представлен граф управления алгоритма.
