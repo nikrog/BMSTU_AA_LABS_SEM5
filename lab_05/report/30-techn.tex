@@ -1,0 +1,296 @@
+\chapter{Технологическая часть}
+В данном разделе будут представлены требования к программному обеспечению, средства реализации, листинги кода и тесты.
+
+\section{Требования к программному обеспечению}
+Вход: действие (0 --- выход из программы, 1 --- последовательная обработка матриц, 2 --- конвейерная обработка матриц, 3 --- сравнение последоватнельной и конвейерной обработки по времени работы, 4 --- вывод информации об этапах обработки матриц), линейный размер квадратных матриц (в случае замеров времени -- начальный и конечный размер) --- целое положительное число, количество матриц (в случае замеров времени -- минимальное и максимальное количество) --- целое положительное число.
+
+Выход: лог этапов обработки матриц, в случае выбора конвейерной обработки выводятся статистические данные --- минимальное, максимальное, среднее, медианное значение времени нахождения заявки в каждой из очередей, во всех очередях, в системе.
+
+\section{Выбор средств реализации}
+
+В качестве языка программирования для реализации данной лабораторной работы был выбран язык программирования С++ \cite{cpp}. Данный язык программирования позволяет замерить время выполнения работы реализации алгоритма, а также организовать конвейерную обработку данных.
+
+Время выполнения реализаций трехэтапного алгоритма обработки матриц было замерено с помощью функции \textit{std::chrono::system\_clock::now(...)} из библиотеки $chrono$ \cite{chrono}.
+
+В качестве среды разработки был выбран CLion \cite{clion}. 
+
+Графики были построены с использованием языка программирования Python \cite{PythonBook}.
+
+\section{Реализация алгоритмов}
+В листингах \ref{mult} -- \ref{det} представлена реализация алгоритмов этапов обработки матриц,
+в листинге \ref{lin_alg} --- реализация алгоритма последовательной обработки матриц, а в листингах \ref{conv_alg} -- \ref{st3} --- реализация алгоритма конвейерной обработки матриц.
+
+\captionsetup{singlelinecheck = false, justification=raggedright}
+\begin{lstlisting}[caption=Реализация алгоритма возведения матрицы в квадрат, 
+    label={mult}]
+void mult_matrix(matrix_t &matrix)
+{
+    std::vector<std::vector<double>> tmp_data;
+    tmp_data.resize(matrix.size);
+    for (size_t i = 0; i < matrix.size; i++)
+    {
+        tmp_data[i].resize(matrix.size);
+    }
+    matrix_t res;
+    res.size = matrix.size;
+    res.data = tmp_data;
+    for (size_t i = 0; i < res.size; i++)
+    {
+        for (size_t j = 0; j < res.size; j++)
+        {
+            for (size_t k = 0; k < res.size; k++)
+            {
+                res.data[i][j] += matrix.data[i][k] * matrix.data[k][j];
+            }
+        }
+    }
+    for (size_t i = 0; i < res.size; i++){
+        for(size_t j = 0; j < res.size; j++){
+            matrix.data[i][j] = res.data[i][j];
+        }
+    }
+}
+\end{lstlisting}
+
+\begin{lstlisting}[caption=Реализация алгоритма приведения матрицы к верхнетреугольному виду, 
+    label={triangulation}]
+void triangulate_matr(matrix_t &matrix)
+{
+    for (size_t i = 0; i < matrix.size - 1; i++)
+    {
+        size_t max_col_place = get_max_in_column(matrix, i);
+
+        if (max_col_place != i)
+        {
+            std::swap(matrix.data[i], matrix.data[max_col_place]);
+        }
+
+        for (size_t j = i + 1; j < matrix.size; j++)
+        {
+            double mult = -matrix.data[j][i] / matrix.data[i][i];
+
+            for (size_t k = i; k < matrix.size; k++)
+            {
+                matrix.data[j][k] += matrix.data[i][k] * mult;
+            }
+        }
+    }
+}
+
+int get_max_in_column(matrix_t matrix, int col_place)
+{
+    double max_elem = matrix.data[col_place][col_place];
+    size_t max_place = col_place;
+
+    for (size_t i = col_place + 1; i < matrix.size; i++)
+    {
+        if (matrix.data[i][col_place] >= max_elem)
+        {
+            max_elem = matrix.data[i][col_place];
+            max_place = i;
+        }
+    }
+
+    return max_place;
+}
+\end{lstlisting}
+
+\begin{lstlisting}[caption=Реализация алгоритма нахождения определителя верхнетругольной матрицы, 
+    label={det}]
+void get_determinate(matrix_t &matrix)
+{
+    double det = 1;
+
+    for (size_t i = 0; i < matrix.size; i++)
+    {
+        det *= matrix.data[i][i];
+    }
+
+    matrix.det = det;
+}
+\end{lstlisting}
+
+\begin{lstlisting}[caption=Реализация алгоритма последовательной обработки матриц, 
+    label={lin_alg}]
+void linear_alg(int count, size_t size)
+{
+    std::queue<matrix_t> q1;
+    std::queue<matrix_t> q2;
+    std::queue<matrix_t> q3;
+
+    queues_t queues = {.q1 = q1, .q2 = q2, .q3 = q3};
+
+    for (int i = 0; i < count; i++)
+    {
+        matrix_t res = generate_matrix(size);
+
+        queues.q1.push(res);
+    }
+
+    for (int i = 0; i < count; i++)
+    {
+        matrix_t matrix = queues.q1.front();
+        stage1_linear(matrix, i + 1); // Stage 1
+        queues.q1.pop();
+        queues.q2.push(matrix);
+
+        matrix = queues.q2.front();
+        stage2_linear(matrix, i + 1); // Stage 2
+        queues.q2.pop();
+        queues.q3.push(matrix);
+
+        matrix = queues.q3.front();
+        stage3_linear(matrix, i + 1); // Stage 3
+        queues.q3.pop();
+    }
+}
+\end{lstlisting}
+
+
+\begin{lstlisting}[caption=Реализация алгоритма конвейерной обработки матриц,
+    label={conv_alg}]
+void conveyor_alg(int count, size_t size)
+{
+    std::queue<matrix_t> q1;
+    std::queue<matrix_t> q2;
+    std::queue<matrix_t> q3;
+
+    queues_t queues = {.q1 = q1, .q2 = q2, .q3 = q3};
+
+    for (int i = 0; i < count; i++)
+    {
+        matrix_t res = gen_matrix(size);
+        q1.push(res);
+    }
+
+    std::thread threads[THREADS];
+
+    threads[0] = std::thread(stage1_conv, std::ref(q1), std::ref(q2), std::ref(q3));
+    threads[1] = std::thread(stage2_conv, std::ref(q1), std::ref(q2), std::ref(q3));
+    threads[2] = std::thread(stage3_conv, std::ref(q1), std::ref(q2), std::ref(q3));
+
+    for (int i = 0; i < THREADS; i++)
+    {
+        threads[i].join();
+    }
+}
+\end{lstlisting}
+
+\begin{lstlisting}[caption=Реализация алгоритма конвейерной обработки матриц (1-ый поток),
+	label={st1}]
+void stage1_conv(std::queue<matrix_t> &q1, std::queue<matrix_t> &q2)
+{
+    int task_num = 1;
+    std::mutex m;
+
+    while(!q1.empty())
+    {
+        m.lock();
+        matrix_t matrix = q1.front();
+        m.unlock();
+
+        log_conveyor(matrix, task_num++, 1, mult_matrix);
+        m.lock();
+        q2.push(matrix);
+        q1.pop();
+        m.unlock();
+    }
+}
+\end{lstlisting}
+
+\begin{lstlisting}[caption=Реализация алгоритма конвейерной обработки матриц (2-ой поток),
+	label={st2}]
+void stage2_conv(std::queue<matrix_t> &q1, std::queue<matrix_t> &q2, std::queue<matrix_t> &q3)
+{
+    int task_num = 1;
+    std::mutex m;
+
+    do
+    {
+        m.lock();
+        bool is_q2empty = q2.empty();
+        m.unlock();
+        
+        if (!is_q2empty)
+        {
+            m.lock();
+            matrix_t matrix = q2.front();
+            m.unlock();
+
+            log_conveyor(matrix, task_num++, 2, triangulate_matr);
+            m.lock();
+            q3.push(matrix);
+            q2.pop();
+            m.unlock();
+        }
+    } while (!q1.empty() || !q2.empty());
+}
+\end{lstlisting}
+
+\begin{lstlisting}[caption=Реализация алгоритма конвейерной обработки матриц (3-ий поток),
+	label={st3}]
+void stage3_conv(std::queue<matrix_t> &q1, std::queue<matrix_t> &q2, std::queue<matrix_t> &q3)
+{
+    int task_num = 1;
+    std::mutex m;
+
+    do
+    {
+        m.lock();
+        bool is_q3empty = q3.empty();
+        m.unlock();
+
+        if (!is_q3empty)
+        {
+            m.lock();
+            matrix_t matrix = q3.front();
+            m.unlock();
+
+            log_conveyor(matrix, task_num++, 3, get_determinate);
+            m.lock();
+            q3.pop();
+            m.unlock();
+        }
+    } while (!q1.empty() || !q2.empty() || !q3.empty());
+}
+\end{lstlisting}
+
+\section{Тестирование}
+
+В таблице \ref{test} приведены функциональные тесты для алгоритмов последовательной и конвейерной обработки матриц. Все тесты были пройдены успешно.
+
+\begin{table}[h]
+	\begin{center}
+		\caption{\label{test} Тесты}
+		\begin{tabular}{|c|c|c|c|c|}
+			\hline
+			№ & Действие & Кол-во матриц & Размер матриц & Ожид. результат \\
+			\hline
+            1 & 1 & 5 & -2 & Некорректный ввод! \\
+            \hline
+            2 & 1 & -1 & 5 & Некорректный ввод! \\
+            \hline
+            3 & -1 & 2 & 2 & Неверное действие! \\
+            \hline
+            4 & 5 & 2 & 2 & Неверное действие! \\
+		\hline
+		5 & 1 & 10 & 100 & Лог этапов обработки \\
+		\hline
+            6 & 2 & 10 & 100 & Лог этапов обработки \\
+		\hline
+            7 & 3 & 20 -- 50 & 2 & Замеры времени \\
+		\hline
+            8 & 3 & 10 & 10 -- 100 & Замеры времени \\
+		\hline
+            9 & 4 &  &  & Этапы обработки (вывод)\\
+		\hline
+            10 & 0 &  &  & Выход\\
+		\hline
+		\end{tabular}
+	\end{center}
+\end{table}
+\captionsetup{singlelinecheck = false, justification=centering}
+
+\section*{Вывод}
+В данном разделе были представлены требования к программному обеспечению и средства реализации, реализованы и протестированы алгоритмы почледовательной и конвейерной обработки матриц.
+
